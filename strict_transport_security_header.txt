@@ -1,0 +1,69 @@
+🎯 What is HSTS?
+----------------
+HTTP Strict Transport Security (HSTS) is a security policy that enforces browsers to only communicate with a website using HTTPS. When a website sends the HSTS header, the browser remembers this and automatically upgrades any future HTTP requests to HTTPS, preventing man-in-the-middle attacks.
+
+Example HSTS Header:
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+🛠️ Step 1: Enable HSTS Using Django’s SecurityMiddleware
+---------------------------------------------------------
+Django provides a built-in middleware called SecurityMiddleware to easily configure the Strict-Transport-Security (HSTS) header.
+
+Modify settings.py:
+Make sure the SecurityMiddleware is added to your MIDDLEWARE list.
+# settings.py
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    ...,
+]
+Then, configure the HSTS settings in settings.py:
+# settings.py
+# Enforce HTTPS by setting HSTS
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_SSL_REDIRECT = True
+
+Explanation of Settings:
+Setting	Description
+-------------------
+SECURE_HSTS_SECONDS	The duration (in seconds) for which the browser should enforce HTTPS.
+SECURE_HSTS_INCLUDE_SUBDOMAINS	Applies the policy to all subdomains as well.
+SECURE_HSTS_PRELOAD	Allows your domain to be preloaded in browsers’ HSTS lists.
+SECURE_SSL_REDIRECT	Redirects all HTTP requests to HTTPS automatically.
+
+Example Values:
+SECURE_HSTS_SECONDS = 31536000 → 1 year
+SECURE_HSTS_SECONDS = 0 → Disables HSTS
+
+🛠️ Step 2: Test HSTS in Local Development (Optional)
+-----------------------------------------------------
+If you want to test HSTS on your local machine, make sure you're using HTTPS during development.
+
+Run your server with HTTPS:
+python manage.py runserver_plus --cert-file cert.pem
+
+Use SECURE_HSTS_SECONDS with a lower value (e.g., 60 seconds) for testing.
+
+🛠️ Step 3: Verify the HSTS Header
+---------------------------------
+Once the server is running, open your browser and check the Response Headers:
+
+Open Developer Tools (F12) → Network Tab.
+Select a request to your website.
+Look for the Strict-Transport-Security header.
+You should see something like:
+
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+🛠️ Step 4: Disable HSTS (Optional)
+-----------------------------------
+To disable HSTS, set SECURE_HSTS_SECONDS to 0 and ensure this is done over an HTTPS connection:
+
+# settings.py
+
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+SECURE_SSL_REDIRECT = False

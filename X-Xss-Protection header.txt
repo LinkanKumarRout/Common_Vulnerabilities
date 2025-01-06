@@ -1,0 +1,76 @@
+Absence of X-XSS Protection Header
+----------------------------------
+What is the X-XSS-Protection Header?
+The X-XSS-Protection header is a security feature that instructs browsers to enable their built-in XSS filters to block malicious scripts from executing.
+
+Response Header:
+----------------
+X-XSS-Protection: 1; mode=block
+This configuration means:
+
+1: Enables the XSS filter.
+mode=block: Prevents the page from rendering if an XSS attack is detected.
+
+Step 1: Add Security Headers Using Django Middleware
+----------------------------------------------------
+Django provides a simple way to set custom headers via middleware. Here's how to add the X-XSS-Protection header.
+
+Create a Custom Middleware
+Create a file named security_headers.py in your app directory (or anywhere in your project).
+
+# security_headers.py
+
+class XSSProtectionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response["X-XSS-Protection"] = "1; mode=block"
+        return response
+
+🛠️ Step 2: Register the Middleware in settings.py
+-------------------------------------------------
+Add your custom middleware to the MIDDLEWARE setting in your settings.py file.
+
+# settings.py
+
+MIDDLEWARE = [
+    ...,
+    'your_app.security_headers.XSSProtectionMiddleware',
+]
+Replace your_app with the name of your Django app.
+
+🛠️ Step 3: Alternative - Using Django’s Built-in SECURE_BROWSER_XSS_FILTER Setting
+-----------------------------------------------------------------------------------
+Django provides a built-in setting called SECURE_BROWSER_XSS_FILTER, which automatically adds the X-XSS-Protection header.
+
+Add to settings.py:
+# settings.py
+
+SECURE_BROWSER_XSS_FILTER = True
+
+🛠️ Step 4: Optional - Use Django's SecurityMiddleware
+------------------------------------------------------
+Django’s SecurityMiddleware can handle several security headers, including the XSS protection header.
+
+Enable SecurityMiddleware:
+Ensure that SecurityMiddleware is included in your middleware stack:
+# settings.py
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    ...,
+]
+
+🧩 5. Use Django’s SecurityMiddleware with Custom Headers
+----------------------------------------------------------
+If you’re using Django’s SecurityMiddleware, you can add the header using the SECURE_PROXY_SSL_HEADER setting.
+
+Step 1: Add Custom Header in settings.py
+# settings.py
+
+from django.middleware.security import SecurityMiddleware
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_XSS_PROTECTION", "1; mode=block")
+

@@ -1,0 +1,89 @@
+In a Django project, session timeout can be configured by adjusting the session settings in your settings.py file. Django provides two primary ways to control session timeout: global session expiration and individual session expiration.
+
+1. Global Session Timeout Configuration
+---------------------------------------
+You can configure the session timeout for the entire project by setting the SESSION_COOKIE_AGE in settings.py. The SESSION_COOKIE_AGE defines the session's lifespan in seconds.
+
+Example:
+# settings.py
+# Set session timeout to 30 minutes (1800 seconds)
+SESSION_COOKIE_AGE = 1800
+
+# Ensure the session expires when the user closes the browser
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Optional: Prevent session from being saved when not modified
+SESSION_SAVE_EVERY_REQUEST = False
+  
+Explanation:
+------------
+SESSION_COOKIE_AGE: The number of seconds the session will last (default is 2 weeks).
+SESSION_EXPIRE_AT_BROWSER_CLOSE: If True, the session will expire when the user closes the browser.
+SESSION_SAVE_EVERY_REQUEST: If True, the session will be saved to the database on every request.
+  
+2. Per-Session Timeout (Custom Logic)
+-------------------------------------
+You can control session timeout on a per-session basis by setting the request.session.set_expiry() method inside your views.
+
+Example:
+# views.py
+from django.shortcuts import render
+
+def my_view(request):
+    # Set session to expire after 15 minutes of inactivity
+    request.session.set_expiry(900)  # 900 seconds = 15 minutes
+    
+    return render(request, 'my_template.html')
+  
+3. Using Middleware for Session Timeout
+---------------------------------------
+You can create custom middleware to log users out after a specific period of inactivity.
+
+Example Middleware:
+-------------------
+# middleware.py
+import datetime
+from django.conf import settings
+from django.contrib.auth import logout
+
+class SessionTimeoutMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            last_activity = request.session.get('last_activity')
+            now = datetime.datetime.now()
+
+            # Check if the last activity time exceeds the timeout
+            if last_activity:
+                elapsed_time = (now - last_activity).total_seconds()
+                if elapsed_time > settings.SESSION_TIMEOUT:
+                    logout(request)
+                    request.session.flush()
+
+            # Update last activity time
+            request.session['last_activity'] = now
+
+        response = self.get_response(request)
+        return response
+  
+Add the Middleware:
+-------------------
+In settings.py, add the middleware to the MIDDLEWARE list.
+# settings.py
+MIDDLEWARE = [
+    ...,
+    'your_app.middleware.SessionTimeoutMiddleware',
+]
+
+# Set your custom session timeout
+SESSION_TIMEOUT = 1800  # 30 minutes
+  
+4. Using Django's Built-in Session Engine
+------------------------------------------
+Make sure your SESSION_ENGINE is correctly set in settings.py.
+
+Example:
+# settings.py
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Store sessions in the database
